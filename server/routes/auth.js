@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const VerifiedTeacher = require('../models/VerifiedTeacher');
 
 // Register
 router.post('/register', async (req, res) => {
@@ -21,6 +22,14 @@ router.post('/register', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
         console.log('[REG 3] Password hashed');
+
+        // Enforce verified email for teachers
+        if (role === 'teacher') {
+            const verified = await VerifiedTeacher.findOne({ email: new RegExp(`^${email}$`, 'i') });
+            if (!verified) {
+                return res.status(403).json({ msg: 'Email not found in verified faculty directory. Please ask Admin to sync.' });
+            }
+        }
 
         // Determine Name if not provided
         const userRole = role || 'student';
@@ -104,5 +113,112 @@ router.post('/login', async (req, res) => {
     }
 });
 
+
+// Sync Teachers from Website
+router.post('/sync-teachers', async (req, res) => {
+    console.log('=== SYNC TEACHERS START ===');
+    try {
+        // Fetch IIITM teachers page
+        const response = await fetch('https://www.iiitm.ac.in/index.php/en/component/splms/?view=teachers');
+        const text = await response.text();
+        
+        // Regex to extract all emails ending with @iiitm.ac.in
+        const matches = [...text.matchAll(/([a-zA-Z0-9._-]+@iiitm\.ac\.in)/g)];
+        const uniqueEmails = [...new Set(matches.map(m => m[1].toLowerCase().trim()))];
+        console.log(`[SYNC 1] Found ${uniqueEmails.length} unique emails on website`);
+
+        // We will just clear and recreate the VerifiedTeacher collection for simplicity
+        // as we don't have secondary data to preserve in this model
+        await VerifiedTeacher.deleteMany({});
+        
+        const docsToInsert = uniqueEmails.map(email => ({ email }));
+        if (docsToInsert.length > 0) {
+            await VerifiedTeacher.insertMany(docsToInsert);
+        }
+
+        console.log(`[SYNC 2] Added/Updated: ${uniqueEmails.length} verified emails`);
+        res.json({ msg: 'Sync successful', added: uniqueEmails.length, deleted: 0, totalActive: uniqueEmails.length });
+
+    } catch (err) {
+        console.error('=== SYNC TEACHERS ERROR ===');
+        console.error(err);
+        res.status(500).json({ msg: 'Failed to sync teachers', error: err.message });
+    }
+});
+
+// Clerk Login Bridge
+router.post('/clerk-login', async (req, res) => {
+    console.log('=== CLERK LOGIN START ===');
+    try {
+        const { email, name, intendedRole } = req.body;
+        if (!email) {
+            return res.status(400).json({ msg: 'Email is required' });
+        }
+
+        const role = intendedRole || 'student';
+
+        // Enforce college domain for ALL roles
+        if (!email.toLowerCase().endsWith('@iiitm.ac.in')) {
+            console.log(`[CLERK LOGIN] Rejected non-college email: ${email}`);
+            return res.status(403).json({ msg: 'Please login with your verified college email (@iiitm.ac.in).' });
+        }
+
+        // Enforce verified email for teachers
+        if (role === 'teacher') {
+            const verified = await VerifiedTeacher.findOne({ email: new RegExp(`^${email}$`, 'i') });
+            if (!verified) {
+                console.log(`[CLERK LOGIN] Rejected unverified teacher attempt: ${email}`);
+                return res.status(403).json({ msg: 'Email not found in verified faculty directory. Please contact Admin.' });
+            }
+        }
+
+        // Find user by email
+        let user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') });
+        
+        if (!user) {
+            console.log(`[CLERK LOGIN] User not found, auto-registering as ${role}:`, email);
+            const salt = await bcrypt.genSalt(10);
+            const dummyPasswordHash = await bcrypt.hash('CLERK_AUTH_' + Date.now(), salt);
+            
+            // Format name nicely
+            let displayName = name || email.split('@')[0];
+            if (role === 'teacher' && !displayName.toLowerCase().startsWith('dr') && !displayName.toLowerCase().startsWith('prof')) {
+                // Keep the name from Google, it's usually correct
+            }
+            
+            user = new User({
+                name: displayName,
+                email: email.toLowerCase(),
+                passwordHash: dummyPasswordHash,
+                role: role
+            });
+            await user.save();
+        } else if (role === 'teacher' && user.role !== 'teacher') {
+            // They are registered as a student (maybe from previous usage) but they are actually a verified teacher
+            // Since they passed the VerifiedTeacher check above, we should promote them!
+            console.log(`[CLERK LOGIN] Promoting existing user ${email} to teacher!`);
+            user.role = 'teacher';
+            await user.save();
+        }
+
+        console.log('[CLERK LOGIN] User verified:', { email: user.email, role: user.role });
+
+        // Issue standard JWT to maintain compatibility with backend routes
+        const payload = { user: { id: user.id, role: user.role } };
+        jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' }, (err, token) => {
+            if (err) {
+                console.error('[CLERK LOGIN] JWT error:', err);
+                return res.status(500).json({ msg: 'JWT error', error: err.message });
+            }
+            console.log('[CLERK LOGIN] SUCCESS! Sending legacy JWT.');
+            res.json({ token, role: user.role, userId: user.id, name: user.name });
+        });
+
+    } catch (err) {
+        console.error('=== CLERK LOGIN ERROR ===');
+        console.error(err);
+        res.status(500).json({ msg: 'Server error', error: err.message });
+    }
+});
 
 module.exports = router;

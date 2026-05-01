@@ -37,6 +37,20 @@ const AdminDashboard = () => {
         }
     };
 
+    const syncTeachers = async () => {
+        const confirm = window.confirm("This will fetch the latest teacher directory from the IIITM website. It will ADD new teachers and DELETE any current teachers not found on the site. Continue?");
+        if (!confirm) return;
+        
+        const loadingToast = toast.loading('Syncing teacher directory...');
+        try {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/sync-teachers`);
+            toast.success(`Sync Complete: Added ${res.data.added}, Removed ${res.data.deleted}. Active: ${res.data.totalActive}`, { id: loadingToast });
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response?.data?.msg || 'Failed to sync teachers.', { id: loadingToast });
+        }
+    };
+
     // Infer section from question text for old responses missing the section field
     const labKeywords = ['experiment', 'lab manual', 'methodical', 'laboratory', 'lab session', 'creative was'];
     const generalKeywords = ['Five best', 'work load', 'lectures held regularly', 'like / dislike', 'hours per week', 'additional comments'];
@@ -107,8 +121,10 @@ const AdminDashboard = () => {
     const groupedResponses = responses.reduce((acc, r) => {
         const formTitle = r.formId?.title || 'Unknown Form';
         const formId = r.formId?._id || 'unknown';
+        const professorName = r.formId?.assignedFaculty?.name || 'Unknown Professor';
+        
         if (!acc[formId]) {
-            acc[formId] = { title: formTitle, responses: [] };
+            acc[formId] = { title: formTitle, professorName, responses: [] };
         }
         acc[formId].responses.push(r);
         return acc;
@@ -225,6 +241,12 @@ const AdminDashboard = () => {
                                 >
                                     <span>⊕</span> CREATE FEEDBACK FORM <span className="text-emerald-300 opacity-70 ml-2">~</span>
                                 </a>
+                                <button 
+                                    onClick={syncTeachers}
+                                    className="flex items-center gap-2 bg-gradient-to-r from-purple-900/80 to-purple-800/80 hover:from-purple-800 hover:to-purple-700 text-purple-100 px-6 py-3 rounded-xl border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)] transition font-bold tracking-wider uppercase text-sm"
+                                >
+                                    <span>🔄</span> SYNC TEACHERS
+                                </button>
                             </div>
                         </div>
 
@@ -304,8 +326,10 @@ const AdminDashboard = () => {
                                         <h3 className="text-3xl font-black text-white mb-2 tracking-wide text-glow-cyan">
                                             {groupedResponses[expandedSubject]?.title}
                                         </h3>
-                                        <p className="text-cyan-500/80 text-sm font-bold tracking-widest uppercase mb-6">
-                                            {groupedResponses[expandedSubject]?.responses.length} response(s)
+                                        <p className="text-cyan-500/80 text-sm font-bold tracking-widest uppercase mb-6 flex items-center gap-2">
+                                            <span>👨‍🏫 {groupedResponses[expandedSubject]?.professorName}</span>
+                                            <span className="text-cyan-900/50">•</span>
+                                            <span>{groupedResponses[expandedSubject]?.responses.length} response(s)</span>
                                         </p>
                                         <div className="flex gap-3 mb-8">
                                             <button
@@ -382,7 +406,10 @@ const AdminDashboard = () => {
                                                 className="bg-[#1e293b]/60 border border-indigo-500/30 p-6 rounded-xl hover:bg-[#1e293b] hover:border-purple-500/50 hover:shadow-neon-purple cursor-pointer transition-all duration-300 group"
                                             >
                                                 <h3 className="font-bold text-xl text-gray-200 group-hover:text-purple-300 transition-colors">{group.title}</h3>
-                                                <p className="text-purple-400 font-bold text-sm mt-2 tracking-wider">
+                                                <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
+                                                    <span>👨‍🏫</span> {group.professorName}
+                                                </p>
+                                                <p className="text-purple-400 font-bold text-sm mt-3 tracking-wider">
                                                     {group.responses.length} RESPONSE(S)
                                                 </p>
                                                 <div className="mt-4 pt-4 border-t border-gray-700/50 flex justify-between items-center">

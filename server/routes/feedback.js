@@ -147,7 +147,11 @@ router.post('/submit', async (req, res) => {
 router.get('/responses', async (req, res) => {
     try {
         const responses = await FeedbackResponse.find()
-            .populate({ path: 'formId', select: 'title assignedFaculty' })
+            .populate({ 
+                path: 'formId', 
+                select: 'title assignedFaculty',
+                populate: { path: 'assignedFaculty', select: 'name' }
+            })
             .sort({ submittedAt: -1 });
         res.json(responses);
     } catch (err) {

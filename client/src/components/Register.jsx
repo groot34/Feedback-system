@@ -55,7 +55,8 @@ const Register = () => {
             toast.success('Registration Successful! Please Login.');
             navigate(`/login/${role}`);
         } catch (err) {
-            toast.error('Registration failed. The email may already be in use.');
+            const serverMsg = err.response?.data?.msg;
+            toast.error(serverMsg || 'Registration failed. Please check your inputs.');
         }
     };
 

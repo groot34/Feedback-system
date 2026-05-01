@@ -133,6 +133,14 @@ const RoleSelect = () => {
                                         Login as {role.label}
                                     </button>
                                 </SignInButton>
+                            ) : role.key === 'teacher' ? (
+                                <SignInButton mode="modal" forceRedirectUrl="/teacher">
+                                    <button
+                                        className={`w-full py-3 rounded-lg text-black font-extrabold tracking-widest uppercase text-sm bg-gradient-to-r ${role.color} hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300 border border-white/20`}
+                                    >
+                                        Login as {role.label}
+                                    </button>
+                                </SignInButton>
                             ) : (
                                 <button
                                     className={`w-full py-3 rounded-lg text-black font-extrabold tracking-widest uppercase text-sm bg-gradient-to-r ${role.color} hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300 border border-white/20`}
@@ -148,6 +156,8 @@ const RoleSelect = () => {
                                             New {role.label}? <span className="underline decoration-white/50 underline-offset-4">Sign up</span>
                                         </button>
                                     </SignUpButton>
+                                ) : role.key === 'teacher' ? (
+                                    <div className="mt-6 h-5"></div> /* No manual signup for teachers, they are synced */
                                 ) : (
                                     <button
                                         className="mt-6 text-sm text-gray-500 hover:text-white transition-colors"

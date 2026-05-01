@@ -1,10 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { UserButton, useAuth, useUser } from '@clerk/react';
 
 const Navbar = () => {
     const navigate = useNavigate();
-    const role = localStorage.getItem('role');
-    const name = localStorage.getItem('name');
+    const { isSignedIn } = useAuth();
+    const { user } = useUser();
+    
+    const role = localStorage.getItem('role') || (isSignedIn ? 'student' : null);
+    const name = localStorage.getItem('name') || (isSignedIn && user ? user.fullName || user.firstName : null);
 
     const roleLabels = {
         student: { label: 'Student Portal', icon: '🎓', glow: 'text-glow-cyan' },
@@ -60,12 +64,18 @@ const Navbar = () => {
                             </span>
                         )}
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-600 hover:border-slate-500 transition-all duration-300 hover:text-white"
-                    >
-                        Logout
-                    </button>
+                    {isSignedIn ? (
+                        <div className="px-1 py-1 flex items-center justify-center">
+                            <UserButton afterSignOutUrl="/" />
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleLogout}
+                            className="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-600 hover:border-slate-500 transition-all duration-300 hover:text-white"
+                        >
+                            Logout
+                        </button>
+                    )}
                 </div>
             </div>
         </nav>

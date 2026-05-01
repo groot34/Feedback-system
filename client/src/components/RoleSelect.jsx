@@ -1,4 +1,6 @@
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { SignInButton, SignUpButton, useAuth } from '@clerk/react';
+import { useEffect } from 'react';
 
 const roles = [
     {
@@ -29,7 +31,7 @@ const roles = [
         key: 'admin',
         label: 'Admin',
         icon: '🛡️',
-        description: 'Manage forms, faculty and responses',
+        description: 'Manage users, forms, and system settings',
         color: 'from-emerald-400 to-emerald-600',
         border: 'border-emerald-500',
         shadow: 'shadow-neon-emerald',
@@ -41,14 +43,16 @@ const roles = [
 
 const RoleSelect = () => {
     const navigate = useNavigate();
+    const { isSignedIn } = useAuth();
+    const legacyRole = localStorage.getItem('role');
 
-    // Redirect if already logged in
-    const token = localStorage.getItem('token');
-    const existingRole = localStorage.getItem('role');
-    if (token && existingRole) {
-        const routes = { admin: '/admin', teacher: '/teacher', student: '/student' };
-        return <Navigate to={routes[existingRole] || '/student'} replace />;
-    }
+    useEffect(() => {
+        if (isSignedIn) {
+            navigate('/student');
+        } else if (legacyRole) {
+            navigate(`/${legacyRole}`);
+        }
+    }, [isSignedIn, legacyRole, navigate]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 sm:px-8 selection:bg-cyan-500/30">
@@ -102,8 +106,10 @@ const RoleSelect = () => {
                 {roles.map((role) => (
                     <div
                         key={role.key}
-                        className={`bg-[#0f172a]/80 backdrop-blur-xl rounded-2xl border ${role.border} ${role.shadow} transition-all duration-300 overflow-hidden cursor-pointer group hover:-translate-y-2`}
-                        onClick={() => navigate(`/login/${role.key}`)}
+                        className={`bg-[#0f172a]/80 backdrop-blur-xl rounded-2xl border ${role.border} ${role.shadow} transition-all duration-300 overflow-hidden group hover:-translate-y-2 ${role.key !== 'student' ? 'cursor-pointer' : ''}`}
+                        onClick={() => {
+                            if (role.key !== 'student') navigate(`/login/${role.key}`);
+                        }}
                     >
                         <div className={`p-8 flex flex-col items-center text-center h-full ${role.bgGlow} transition-colors duration-500`}>
                             <div className="h-24 w-24 mb-6 relative flex items-center justify-center">
@@ -119,19 +125,37 @@ const RoleSelect = () => {
                             </h2>
                             <p className="text-gray-400 text-sm mb-8 flex-grow">{role.description}</p>
 
-                            <button
-                                className={`w-full py-3 rounded-lg text-black font-extrabold tracking-widest uppercase text-sm bg-gradient-to-r ${role.color} hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300 border border-white/20`}
-                            >
-                                Login as {role.label}
-                            </button>
+                            {role.key === 'student' ? (
+                                <SignInButton mode="modal" forceRedirectUrl="/student">
+                                    <button
+                                        className={`w-full py-3 rounded-lg text-black font-extrabold tracking-widest uppercase text-sm bg-gradient-to-r ${role.color} hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300 border border-white/20`}
+                                    >
+                                        Login as {role.label}
+                                    </button>
+                                </SignInButton>
+                            ) : (
+                                <button
+                                    className={`w-full py-3 rounded-lg text-black font-extrabold tracking-widest uppercase text-sm bg-gradient-to-r ${role.color} hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300 border border-white/20`}
+                                >
+                                    Login as {role.label}
+                                </button>
+                            )}
 
                             {role.canRegister ? (
-                                <button
-                                    className="mt-6 text-sm text-gray-500 hover:text-white transition-colors"
-                                    onClick={(e) => { e.stopPropagation(); navigate(`/register/${role.key}`); }}
-                                >
-                                    New {role.label}? <span className="underline decoration-white/50 underline-offset-4">Sign up</span>
-                                </button>
+                                role.key === 'student' ? (
+                                    <SignUpButton mode="modal" forceRedirectUrl="/student">
+                                        <button className="mt-6 text-sm text-gray-500 hover:text-white transition-colors">
+                                            New {role.label}? <span className="underline decoration-white/50 underline-offset-4">Sign up</span>
+                                        </button>
+                                    </SignUpButton>
+                                ) : (
+                                    <button
+                                        className="mt-6 text-sm text-gray-500 hover:text-white transition-colors"
+                                        onClick={(e) => { e.stopPropagation(); navigate(`/register/${role.key}`); }}
+                                    >
+                                        New {role.label}? <span className="underline decoration-white/50 underline-offset-4">Sign up</span>
+                                    </button>
+                                )
                             ) : (
                                 <div className="mt-6 h-5"></div> /* Placeholder for spacing alignment */
                             )}

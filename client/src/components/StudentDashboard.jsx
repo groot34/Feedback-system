@@ -292,22 +292,20 @@ const StudentDashboard = () => {
                                                                     {q.text}
                                                                 </td>
                                                                 {[5, 4, 3, 2, 1].map(num => (
-                                                                    <td key={num} className="px-3 py-4 text-center">
-                                                                        <label className="relative flex items-center justify-center p-2 rounded cursor-pointer group">
-                                                                            <input
-                                                                                type="radio"
-                                                                                name={q._id}
-                                                                                required={section.includes('Presentation') || section.includes('Lab Component') ? false : q.required}
-                                                                                value={num}
-                                                                                checked={answers[q._id] == num}
-                                                                                onChange={(e) => handleAnswerChange(q._id, e.target.value)}
-                                                                                className="peer sr-only"
-                                                                            />
-                                                                            <div className="w-6 h-6 rounded-full border-2 border-gray-600 peer-checked:border-cyan-400 peer-checked:bg-cyan-900/40 peer-hover:border-cyan-500/50 transition-all flex items-center justify-center shadow-[0_0_10px_rgba(0,0,0,0.5)_inset] peer-checked:shadow-neon-cyan">
-                                                                                <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 scale-0 peer-checked:scale-100 transition-transform drop-shadow-[0_0_5px_rgba(0,255,255,0.8)]"></div>
-                                                                            </div>
-                                                                        </label>
-                                                                    </td>
+                                                                        <td key={num} className="px-3 py-4 text-center">
+                                                                            <label className="relative flex items-center justify-center p-3 rounded-lg cursor-pointer group transition-all duration-300 w-full h-full border border-transparent has-[:checked]:border-cyan-400 has-[:checked]:bg-cyan-900/30 has-[:checked]:shadow-neon-cyan hover:bg-white/5">
+                                                                                <input
+                                                                                    type="radio"
+                                                                                    name={q._id}
+                                                                                    required={section.includes('Presentation') || section.includes('Lab Component') ? false : q.required}
+                                                                                    value={num}
+                                                                                    checked={answers[q._id] == num}
+                                                                                    onChange={(e) => handleAnswerChange(q._id, e.target.value)}
+                                                                                    className="sr-only"
+                                                                                />
+                                                                                <span className="text-gray-500 font-bold group-has-[:checked]:text-cyan-400 group-has-[:checked]:text-glow-cyan transition-colors">{num}</span>
+                                                                            </label>
+                                                                        </td>
                                                                 ))}
                                                             </tr>
                                                         ))}
@@ -321,9 +319,9 @@ const StudentDashboard = () => {
                                                     <div key={q._id} className="bg-[#1e293b]/40 p-6 rounded-xl border border-gray-800 hover:border-cyan-900/50 transition-colors shadow-sm">
                                                         <label className="block text-gray-200 mb-4 font-medium leading-relaxed">{q.text}</label>
                                                         {q.type === 'score' ? (
-                                                            <div className="flex flex-wrap gap-4">
+                                                            <div className="flex flex-wrap gap-4 mt-4">
                                                                 {[1, 2, 3, 4, 5].map(n => (
-                                                                    <label key={n} className="flex items-center gap-3 cursor-pointer group p-2 rounded-lg hover:bg-white/5 transition">
+                                                                    <label key={n} className="flex items-center justify-center w-12 h-12 cursor-pointer group rounded-xl border border-gray-700 bg-[#0f172a] hover:border-cyan-500/50 hover:bg-white/5 transition-all duration-300 has-[:checked]:border-cyan-400 has-[:checked]:bg-cyan-900/40 has-[:checked]:shadow-neon-cyan has-[:checked]:scale-105">
                                                                         <input
                                                                             type="radio"
                                                                             name={q._id}
@@ -331,19 +329,16 @@ const StudentDashboard = () => {
                                                                             value={n}
                                                                             checked={answers[q._id] == n}
                                                                             onChange={(e) => handleAnswerChange(q._id, e.target.value)}
-                                                                            className="peer sr-only"
+                                                                            className="sr-only"
                                                                         />
-                                                                        <div className="w-5 h-5 rounded-full border-2 border-gray-600 peer-checked:border-cyan-400 peer-checked:bg-cyan-900/40 peer-hover:border-cyan-500/50 transition-all flex items-center justify-center peer-checked:shadow-[0_0_8px_rgba(0,255,255,0.4)]">
-                                                                            <div className="w-2 h-2 rounded-full bg-cyan-400 scale-0 peer-checked:scale-100 transition-transform"></div>
-                                                                        </div>
-                                                                        <span className="text-gray-400 peer-checked:text-cyan-400 font-bold peer-checked:text-glow-cyan transition-colors">{n}</span>
+                                                                        <span className="text-gray-500 font-black text-lg group-has-[:checked]:text-cyan-400 group-has-[:checked]:text-glow-cyan transition-colors">{n}</span>
                                                                     </label>
                                                                 ))}
                                                             </div>
                                                         ) : q.type === 'choice' ? (
-                                                            <div className="flex flex-wrap gap-6">
+                                                            <div className="flex flex-wrap gap-4 mt-4">
                                                                 {q.options && q.options.map(opt => (
-                                                                    <label key={opt} className="flex items-center gap-3 cursor-pointer group p-2 border border-transparent rounded-lg hover:border-gray-700 hover:bg-white/5 transition">
+                                                                    <label key={opt} className="flex items-center gap-3 cursor-pointer group py-3 px-5 border border-gray-700 bg-[#0f172a] rounded-xl hover:border-indigo-500/50 hover:bg-white/5 transition-all duration-300 has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-900/30 has-[:checked]:shadow-[0_0_15px_rgba(99,102,241,0.2)] has-[:checked]:-translate-y-1">
                                                                         <input
                                                                             type="radio"
                                                                             name={q._id}
@@ -351,14 +346,11 @@ const StudentDashboard = () => {
                                                                             value={opt}
                                                                             checked={answers[q._id] === opt}
                                                                             onChange={(e) => handleAnswerChange(q._id, e.target.value)}
-                                                                            className="peer sr-only"
+                                                                            className="sr-only"
                                                                         />
-                                                                        <div className="w-5 h-5 rounded border-2 border-gray-600 peer-checked:border-indigo-400 peer-checked:bg-indigo-900/40 peer-hover:border-indigo-500/50 transition-all flex items-center justify-center peer-checked:shadow-[0_0_8px_rgba(99,102,241,0.4)]">
-                                                                            <svg className="w-3 h-3 text-indigo-400 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                                            </svg>
-                                                                        </div>
-                                                                        <span className="text-gray-400 peer-checked:text-indigo-400 font-bold transition-colors">{opt}</span>
+                                                                        {/* Indicator Light */}
+                                                                        <div className="w-2 h-2 rounded-full bg-gray-600 group-has-[:checked]:bg-indigo-400 group-has-[:checked]:shadow-[0_0_8px_rgba(99,102,241,0.8)] transition-all"></div>
+                                                                        <span className="text-gray-400 group-has-[:checked]:text-indigo-400 font-bold transition-colors">{opt}</span>
                                                                     </label>
                                                                 ))}
                                                             </div>

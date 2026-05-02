@@ -2,11 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-// Middleware to check if admin (Simplified)
-const isAdmin = async (req, res, next) => {
-    // In a real app, verify token. For prototype, allow all or use simple header.
-    next();
-};
+const { isAdmin } = require('../middleware/auth');
 
 // Add Student Identity Commitment
 router.post('/add-student-identity', isAdmin, async (req, res) => {

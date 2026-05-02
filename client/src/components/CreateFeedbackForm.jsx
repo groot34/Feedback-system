@@ -26,7 +26,7 @@ const CreateFeedbackForm = () => {
     useEffect(() => {
         const fetchFaculty = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/feedback/faculty-list');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/feedback/faculty-list`);
                 setFacultyList(res.data);
             } catch (err) {
                 console.error("Failed to fetch faculty list", err);
@@ -119,7 +119,7 @@ const CreateFeedbackForm = () => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/feedback/create', {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/feedback/create`, {
                 title,
                 description,
                 questions,

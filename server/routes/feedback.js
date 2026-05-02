@@ -4,10 +4,7 @@ const FeedbackForm = require('../models/FeedbackForm');
 const FeedbackResponse = require('../models/FeedbackResponse');
 const User = require('../models/User');
 
-// Middleware to check if admin (Simplified)
-const isAdmin = async (req, res, next) => {
-    next();
-};
+const { auth, isAdmin, isTeacher } = require('../middleware/auth');
 
 // Create a new feedback form
 router.post('/create', isAdmin, async (req, res) => {
@@ -33,7 +30,7 @@ router.post('/create', isAdmin, async (req, res) => {
 
 // Get all active forms (for students) with populated faculty info
 // Now supports filtering by student email if studentId is provided in query
-router.get('/all', async (req, res) => {
+router.get('/all', auth, async (req, res) => {
     try {
         const { studentId } = req.query;
         let query = { active: true };
@@ -86,7 +83,7 @@ router.delete('/:id', isAdmin, async (req, res) => {
 });
 
 // Get list of all faculty members
-router.get('/faculty-list', async (req, res) => {
+router.get('/faculty-list', auth, async (req, res) => {
     try {
         const faculty = await User.find({ role: 'teacher' }).select('name email');
         res.json(faculty);
@@ -118,7 +115,7 @@ router.patch('/close/:id', isAdmin, async (req, res) => {
 });
 
 // Submit feedback
-router.post('/submit', async (req, res) => {
+router.post('/submit', auth, async (req, res) => {
     try {
         const { formId, answers, studentId } = req.body;
 
@@ -144,7 +141,7 @@ router.post('/submit', async (req, res) => {
 });
 
 // Get all feedback responses (for admin)
-router.get('/responses', async (req, res) => {
+router.get('/responses', isAdmin, async (req, res) => {
     try {
         const responses = await FeedbackResponse.find()
             .populate({ 
@@ -161,7 +158,7 @@ router.get('/responses', async (req, res) => {
 });
 
 // Get form IDs that a student has already submitted feedback for
-router.get('/submitted/:studentId', async (req, res) => {
+router.get('/submitted/:studentId', auth, async (req, res) => {
     try {
         const { studentId } = req.params;
         const responses = await FeedbackResponse.find({ studentId }).select('formId');
@@ -174,7 +171,7 @@ router.get('/submitted/:studentId', async (req, res) => {
 });
 
 // Toggle approval for a single response
-router.patch('/approve/:responseId', async (req, res) => {
+router.patch('/approve/:responseId', isAdmin, async (req, res) => {
     try {
         const response = await FeedbackResponse.findById(req.params.responseId);
         if (!response) return res.status(404).json({ msg: 'Response not found' });
@@ -189,7 +186,7 @@ router.patch('/approve/:responseId', async (req, res) => {
 });
 
 // Approve or revoke all responses for a given form
-router.patch('/approve-all/:formId', async (req, res) => {
+router.patch('/approve-all/:formId', isAdmin, async (req, res) => {
     try {
         const { approve } = req.body;
         const result = await FeedbackResponse.updateMany(
@@ -204,7 +201,7 @@ router.patch('/approve-all/:formId', async (req, res) => {
 });
 
 // Get only approved responses for a specific teacher
-router.get('/responses/teacher/:teacherId', async (req, res) => {
+router.get('/responses/teacher/:teacherId', isTeacher, async (req, res) => {
     try {
         const responses = await FeedbackResponse.find({ approvedForTeacher: true })
             .populate({ path: 'formId', select: 'title assignedFaculty' })

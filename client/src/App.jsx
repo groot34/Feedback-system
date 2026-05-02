@@ -1,4 +1,21 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
+
+// Global Axios Interceptor to attach JWT token
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['x-auth-token'] = token;
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 import { Toaster } from 'react-hot-toast';
 import RoleSelect from './components/RoleSelect';
 import Login from './components/Login';

@@ -31,6 +31,7 @@ const ProtectedRoute = ({ children, role }) => {
                     
                     localStorage.setItem('token', res.data.token);
                     localStorage.setItem('role', res.data.role);
+                    localStorage.setItem('userId', res.data.userId); // Added to track submissions correctly
                     localStorage.setItem('name', res.data.name); // Store name to be safe
                     
                     // Reload to ensure all axios instances/app state pick up the token
@@ -102,4 +103,4 @@ const ProtectedRoute = ({ children, role }) => {
     return children;
 };
 
-export default ProtectedRoute;
+ export default ProtectedRoute;

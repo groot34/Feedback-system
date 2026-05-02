@@ -31,6 +31,13 @@ createRoot(document.getElementById('root')).render(
           footerActionLink: 'text-cyan-400 hover:text-cyan-300',
           formButtonPrimary: 'hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all text-black',
           socialButtonsBlockButtonText: 'text-white',
+          userButtonPopoverCard: 'bg-[#0f172a] border border-cyan-900',
+          userPreviewMainIdentifier: 'text-white font-semibold',
+          userPreviewSecondaryIdentifier: 'text-gray-400',
+          userButtonPopoverActionButton: 'hover:bg-slate-800 text-white',
+          userButtonPopoverActionButtonText: 'text-white',
+          userButtonPopoverActionButtonIconBox: 'text-gray-400',
+          userButtonPopoverFooter: 'hidden',
         }
       }}
     >

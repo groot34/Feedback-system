@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import Navbar from './Navbar';
 import AnalyticsPanel from './AnalyticsPanel';
+import Pagination from './Pagination';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState({ pendingCount: 0, onChainCount: 0 });
@@ -10,6 +11,7 @@ const AdminDashboard = () => {
     const [responses, setResponses] = useState([]);
     const [activeTab, setActiveTab] = useState('dashboard'); // Changed default to dashboard
     const [expandedSubject, setExpandedSubject] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         fetchData();
@@ -351,11 +353,19 @@ const AdminDashboard = () => {
                                             <AnalyticsPanel responses={groupedResponses[expandedSubject]?.responses || []} />
                                         </div>
 
+                                        {groupedResponses[expandedSubject]?.responses.length > 10 && (
+                                            <Pagination 
+                                                currentPage={currentPage}
+                                                totalPages={Math.ceil(groupedResponses[expandedSubject]?.responses.length / 10)}
+                                                onPageChange={setCurrentPage}
+                                            />
+                                        )}
+
                                         <div className="space-y-4">
-                                            {groupedResponses[expandedSubject]?.responses.map((response, idx) => (
+                                            {(groupedResponses[expandedSubject]?.responses.slice((currentPage - 1) * 10, currentPage * 10)).map((response, idx) => (
                                                 <div key={response._id} className={`border rounded-xl bg-[#0f172a] overflow-hidden transition-all duration-300 ${response.approvedForTeacher ? 'border-emerald-500/50 shadow-[0_0_10px_rgba(0,255,102,0.1)]' : 'border-gray-700 hover:border-cyan-500/30'}`}>
                                                     <div className={`flex justify-between items-center px-5 py-3 text-white border-b ${response.approvedForTeacher ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-[#1e293b]/50 border-gray-700'}`}>
-                                                        <span className="font-bold text-lg text-gray-200">📝 RESPONSE #{idx + 1}</span>
+                                                        <span className="font-bold text-lg text-gray-200">📝 RESPONSE #{(currentPage - 1) * 10 + idx + 1}</span>
                                                         <div className="flex items-center gap-3">
                                                             <span className="text-xs text-cyan-500/80 font-mono">
                                                                 {new Date(response.submittedAt).toLocaleString()}
@@ -396,13 +406,21 @@ const AdminDashboard = () => {
                                                 </div>
                                             ))}
                                         </div>
+
+                                        {groupedResponses[expandedSubject]?.responses.length > 10 && (
+                                            <Pagination 
+                                                currentPage={currentPage}
+                                                totalPages={Math.ceil(groupedResponses[expandedSubject]?.responses.length / 10)}
+                                                onPageChange={setCurrentPage}
+                                            />
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {Object.entries(groupedResponses).map(([formId, group]) => (
                                             <div
                                                 key={formId}
-                                                onClick={() => setExpandedSubject(formId)}
+                                                onClick={() => { setExpandedSubject(formId); setCurrentPage(1); }}
                                                 className="bg-[#1e293b]/60 border border-indigo-500/30 p-6 rounded-xl hover:bg-[#1e293b] hover:border-purple-500/50 hover:shadow-neon-purple cursor-pointer transition-all duration-300 group"
                                             >
                                                 <h3 className="font-bold text-xl text-gray-200 group-hover:text-purple-300 transition-colors">{group.title}</h3>

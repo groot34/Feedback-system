@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
 import AnalyticsPanel from './AnalyticsPanel';
+import Pagination from './Pagination';
 
 const TeacherDashboard = () => {
     const [responses, setResponses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedSubject, setExpandedSubject] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         fetchResponses();
@@ -84,11 +86,19 @@ const TeacherDashboard = () => {
                                     {/* Analytics Panel */}
                                     <AnalyticsPanel responses={groupedResponses[expandedSubject]?.responses || []} />
 
-                                    <div className="space-y-4">
-                                        {groupedResponses[expandedSubject]?.responses.map((response, idx) => (
+                                    {groupedResponses[expandedSubject]?.responses.length > 10 && (
+                                        <Pagination 
+                                            currentPage={currentPage}
+                                            totalPages={Math.ceil(groupedResponses[expandedSubject]?.responses.length / 10)}
+                                            onPageChange={setCurrentPage}
+                                        />
+                                    )}
+
+                                    <div className="space-y-4 mt-6">
+                                        {(groupedResponses[expandedSubject]?.responses.slice((currentPage - 1) * 10, currentPage * 10)).map((response, idx) => (
                                             <div key={response._id} className="border border-purple-500/30 rounded-xl bg-[#1e293b]/60 hover:border-purple-500/60 shadow-neon-purple transition-all overflow-hidden group">
                                                 <div className="flex justify-between items-center px-5 py-4 bg-purple-900/40 border-b border-purple-500/30 text-white">
-                                                    <span className="font-bold text-lg text-gray-200 tracking-wider">📝 RESPONSE #{idx + 1}</span>
+                                                    <span className="font-bold text-lg text-gray-200 tracking-wider">📝 RESPONSE #{(currentPage - 1) * 10 + idx + 1}</span>
                                                     <span className="text-xs text-purple-400 font-mono opacity-80 group-hover:opacity-100 transition-opacity">
                                                         {new Date(response.submittedAt).toLocaleString()}
                                                     </span>
@@ -121,13 +131,21 @@ const TeacherDashboard = () => {
                                             </div>
                                         ))}
                                     </div>
+
+                                    {groupedResponses[expandedSubject]?.responses.length > 10 && (
+                                        <Pagination 
+                                            currentPage={currentPage}
+                                            totalPages={Math.ceil(groupedResponses[expandedSubject]?.responses.length / 10)}
+                                            onPageChange={setCurrentPage}
+                                        />
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {Object.entries(groupedResponses).map(([formId, group]) => (
                                         <div
                                             key={formId}
-                                            onClick={() => setExpandedSubject(formId)}
+                                            onClick={() => { setExpandedSubject(formId); setCurrentPage(1); }}
                                             className="bg-[#1e293b]/60 border border-purple-500/30 p-6 rounded-xl hover:bg-[#1e293b] hover:border-purple-400/60 shadow-neon-purple cursor-pointer transition-all duration-300 group"
                                         >
                                             <h3 className="font-bold text-xl text-gray-200 group-hover:text-purple-300 transition-colors">{group.title}</h3>

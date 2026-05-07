@@ -5,6 +5,7 @@ const FeedbackResponse = require('../models/FeedbackResponse');
 const User = require('../models/User');
 
 const { auth, isAdmin, isTeacher } = require('../middleware/auth');
+const blockchain = require('../blockchain/ledger');
 
 // Create a new feedback form
 router.post('/create', isAdmin, async (req, res) => {
@@ -21,6 +22,7 @@ router.post('/create', isAdmin, async (req, res) => {
             allowedEmails: allowedEmails || []
         });
         await form.save();
+        try { blockchain.recordFormCreated(form._id, form.title, form.assignedFaculty); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json(form);
     } catch (err) {
         console.error(err);
@@ -75,6 +77,7 @@ router.delete('/:id', isAdmin, async (req, res) => {
         // Remove all responses associated with this form
         await FeedbackResponse.deleteMany({ formId });
 
+        try { blockchain.recordFormDeleted(formId); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json({ msg: 'Form and associated responses deleted successfully' });
     } catch (err) {
         console.error(err);
@@ -107,6 +110,7 @@ router.patch('/close/:id', isAdmin, async (req, res) => {
             return res.status(404).json({ msg: 'Form not found' });
         }
 
+        try { blockchain.recordFormClosed(formId); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json(updatedForm);
     } catch (err) {
         console.error(err);
@@ -133,6 +137,7 @@ router.post('/submit', auth, async (req, res) => {
         });
 
         await response.save();
+        try { blockchain.recordSubmission(formId, studentId, answers?.length || 0); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json({ msg: 'Feedback submitted successfully' });
     } catch (err) {
         console.error(err);
@@ -178,6 +183,7 @@ router.patch('/approve/:responseId', isAdmin, async (req, res) => {
 
         response.approvedForTeacher = !response.approvedForTeacher;
         await response.save();
+        try { blockchain.recordApprovalToggle(req.params.responseId, response.approvedForTeacher); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json({ approved: response.approvedForTeacher });
     } catch (err) {
         console.error(err);
@@ -193,6 +199,7 @@ router.patch('/approve-all/:formId', isAdmin, async (req, res) => {
             { formId: req.params.formId },
             { $set: { approvedForTeacher: approve } }
         );
+        try { blockchain.recordBulkApproval(req.params.formId, approve, result.modifiedCount); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json({ modified: result.modifiedCount, approved: approve });
     } catch (err) {
         console.error(err);

@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 
 const { isAdmin } = require('../middleware/auth');
+const blockchain = require('../blockchain/ledger');
 
 // Add Student Identity Commitment
 router.post('/add-student-identity', isAdmin, async (req, res) => {
@@ -36,6 +37,10 @@ router.post('/add-student-identity', isAdmin, async (req, res) => {
             }
         }
 
+        try { blockchain.recordIdentityCommitment(userId, identityCommitment); } catch(e) { console.error('[Blockchain] record error:', e.message); }
+        if (pendingUsers.length >= BATCH_SIZE) {
+            try { blockchain.recordBatchProcessed(pendingUsers.length, pendingUsers.map(u => u.identityCommitment)); } catch(e) { console.error('[Blockchain] record error:', e.message); }
+        }
         res.json({ msg: 'Identity added to queue', commitment: identityCommitment, pendingCount: pendingUsers.length });
     } catch (err) {
         console.error(err.message);
@@ -64,6 +69,7 @@ router.post('/force-batch', isAdmin, async (req, res) => {
             await u.save();
         }
 
+        try { blockchain.recordBatchProcessed(pendingUsers.length, pendingUsers.map(u => u.identityCommitment)); } catch(e) { console.error('[Blockchain] record error:', e.message); }
         res.json({ msg: 'Batch processed successfully', count: pendingUsers.length });
     } catch (err) {
         console.error(err.message);

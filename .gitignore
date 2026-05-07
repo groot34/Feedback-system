@@ -81,3 +81,4 @@ ehthumbs.db
 coverage/
 *.tgz
 .eslintcache
+blockchain_ledger.json
